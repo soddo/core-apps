@@ -47,6 +47,8 @@
         <reportingVersion>0.9.1-SNAPSHOT</reportingVersion>
         <serializationXstreamModuleVersion>0.2.7</serializationXstreamModuleVersion>
         <calculationModuleVersion>1.0</calculationModuleVersion>
+        <referenceapplicationVersion>1.1</referenceapplicationVersion>
+        
 	</properties>
 
 	<dependencyManagement>
@@ -98,6 +100,14 @@
 			
 						
 			<!-- Begin OpenMRS modules -->
+			
+				<dependency>
+				<groupId>org.openmrs.module</groupId>
+				<artifactId>referenceapplication-api</artifactId>								
+				<version>${referenceapplicationVersion}</version>
+				<type>jar</type>
+				<scope>provided</scope>
+			</dependency>
 			
 			<dependency>
 				<groupId>org.openmrs.module</groupId>

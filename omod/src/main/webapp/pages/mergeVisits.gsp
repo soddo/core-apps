@@ -1,5 +1,5 @@
 <%
-    ui.decorateWith("appui", "standardEmrPage")
+    ui.decorateWith("referenceapplication", "standardEmrPage")
 
     ui.includeCss("coreapps", "patientdashboard/patientDashboard.css")
 

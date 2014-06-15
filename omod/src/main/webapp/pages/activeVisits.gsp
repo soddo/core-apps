@@ -1,5 +1,5 @@
 <%
-    ui.decorateWith("appui", "standardEmrPage")
+    ui.decorateWith("referenceapplication", "standardEmrPage")
 %>
 <script type="text/javascript">
     var breadcrumbs = [

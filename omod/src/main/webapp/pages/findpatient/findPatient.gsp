@@ -1,5 +1,5 @@
 <%
-    ui.decorateWith("appui", "standardEmrPage")
+    ui.decorateWith("referenceapplication", "standardEmrPage")
     ui.includeCss("coreapps", "findpatient/findPatient.css")
     ui.includeCss("uicommons", "datatables/dataTables_jui.css")
     ui.includeJavascript("uicommons", "datatables/jquery.dataTables.min.js")
