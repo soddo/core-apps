@@ -4,7 +4,7 @@
 <script type="text/javascript">
     var breadcrumbs = [
         { icon: "icon-home", link: '/' + OPENMRS_CONTEXT_PATH + '/index.htm' },
-        { label: "${ ui.format(patient.patient.familyName) }, ${ ui.format(patient.patient.givenName) }" ,
+        { label: "${ ui.format(patient.patient.givenName) } ${ ui.format(patient.patient.middleName) } ${ ui.format(patient.patient.familyName) }" ,
         link: '${ui.pageLink("coreapps", "clinicianfacing/clinicianFacingPatientDashboard", [patientId: patient.patient.id])}'}
     ]
     var patient = { id: ${ patient.id } };
