@@ -21,6 +21,7 @@ import org.openmrs.module.appframework.context.AppContextModel;
 import org.openmrs.module.appframework.domain.Extension;
 import org.openmrs.module.appframework.service.AppFrameworkService;
 import org.openmrs.module.appui.UiSessionContext;
+import org.openmrs.module.coreapps.contextmodel.PatientContextModel;
 import org.openmrs.module.coreapps.contextmodel.VisitContextModel;
 import org.openmrs.module.emrapi.EmrApiProperties;
 import org.openmrs.module.emrapi.adt.AdtService;
@@ -33,6 +34,7 @@ import org.openmrs.ui.framework.page.PageModel;
 import org.openmrs.ui.framework.page.Redirect;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -70,21 +72,34 @@ public class PatientPageController {
 		model.addAttribute("activeVisit", activeVisit);
 
         AppContextModel contextModel = sessionContext.generateAppContextModel();
-        contextModel.put("patientId", patient.getId());
-		contextModel.put("patientDead", patient.isDead());
+        contextModel.put("patient", new PatientContextModel(patient));
         contextModel.put("visit", activeVisit == null ? null : new VisitContextModel(activeVisit));
+        model.addAttribute("appContextModel", contextModel);
 
         List<Extension> overallActions = appFrameworkService.getExtensionsForCurrentUser("patientDashboard.overallActions", contextModel);
         Collections.sort(overallActions);
         model.addAttribute("overallActions", overallActions);
 
-        List<Extension> visitActions = appFrameworkService.getExtensionsForCurrentUser("patientDashboard.visitActions", contextModel);
-        Collections.sort(visitActions);
+        List<Extension> visitActions;
+        if (activeVisit == null) {
+            visitActions = new ArrayList<Extension>();
+        } else {
+            visitActions = appFrameworkService.getExtensionsForCurrentUser("patientDashboard.visitActions", contextModel);
+            Collections.sort(visitActions);
+        }
         model.addAttribute("visitActions", visitActions);
 
         List<Extension> includeFragments = appFrameworkService.getExtensionsForCurrentUser("patientDashboard.includeFragments");
         Collections.sort(includeFragments);
         model.addAttribute("includeFragments", includeFragments);
+        
+        List<Extension> firstColumnFragments = appFrameworkService.getExtensionsForCurrentUser("patientDashboard.firstColumnFragments");
+        Collections.sort(firstColumnFragments);
+        model.addAttribute("firstColumnFragments", firstColumnFragments);
+        
+        List<Extension> secondColumnFragments = appFrameworkService.getExtensionsForCurrentUser("patientDashboard.secondColumnFragments");
+        Collections.sort(secondColumnFragments);
+        model.addAttribute("secondColumnFragments", secondColumnFragments);
 
         List<Extension> otherActions = appFrameworkService.getExtensionsForCurrentUser(
                 "clinicianFacingPatientDashboard.otherActions", contextModel);

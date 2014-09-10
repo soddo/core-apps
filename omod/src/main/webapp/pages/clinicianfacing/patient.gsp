@@ -16,7 +16,7 @@
 <%   }
 } %>
 
-${ ui.includeFragment("coreapps", "patientHeader", [ patient: patient.patient, activeVisit: activeVisit ]) }
+${ ui.includeFragment("coreapps", "patientHeader", [ patient: patient.patient, activeVisit: activeVisit, appContextModel: appContextModel ]) }
 
 <div class="clear"></div>
 <div class="container">
@@ -25,6 +25,13 @@ ${ ui.includeFragment("coreapps", "patientHeader", [ patient: patient.patient, a
             ${ ui.includeFragment("coreapps", "clinicianfacing/diagnosisWidget", [ patient: patient ]) }
 
             ${ ui.includeFragment("coreapps", "vitals/mostRecentVitals", [patientId: patient.patient.id]) }
+            
+            <% if (firstColumnFragments) {
+			    firstColumnFragments.each { %>
+			        ${ ui.includeFragment(it.extensionParams.provider, it.extensionParams.fragment, [patientId: patient.patient.id])}
+			<%  }
+			} %>
+
         </div>
         <div class="info-container column">
             <%/*
@@ -53,17 +60,22 @@ ${ ui.includeFragment("coreapps", "patientHeader", [ patient: patient.patient, a
             </div>
             */%>
             ${ ui.includeFragment("coreapps", "clinicianfacing/visitsSection", [patient: patient]) }
+            
+            <% if (secondColumnFragments) {
+			    secondColumnFragments.each { %>
+			        ${ ui.includeFragment(it.extensionParams.provider, it.extensionParams.fragment, [patientId: patient.patient.id])}
+			<%   }
+			} %>
+			
         </div>
         <div class="action-container column">
             <div class="action-section">
-                <% if (activeVisit) {
-                    def contextModel = [ patientId: patient.id, "visit.id": activeVisit.visitId, "visit.active": true, "visit.admitted": activeVisit.admitted ]
-                %>
+                <% if (activeVisit) { %>
                     <ul>
                         <h3>${ ui.message("coreapps.clinicianfacing.activeVisitActions") }</h3>
                         <% visitActions.each { ext -> %>
                             <li>
-                                <a href="${ ui.escapeJs(ext.url("/" + ui.contextPath(), contextModel, ui.thisUrl())) }" id="${ ext.id }">
+                                <a href="${ ui.escapeJs(ext.url("/" + ui.contextPath(), appContextModel, ui.thisUrl())) }" id="${ ext.id }">
                                     <i class="${ ext.icon }"></i>
                                     ${ ui.message(ext.label) }
                                 </a>
@@ -74,9 +86,8 @@ ${ ui.includeFragment("coreapps", "patientHeader", [ patient: patient.patient, a
                 <ul>
                     <h3>${ ui.message("coreapps.clinicianfacing.overallActions") }</h3>
                     <%
-                        def contextModel = [ patientId: patient.id ]
                         overallActions.each { ext -> %>
-                            <a href="${ ui.escapeJs(ext.url("/" + ui.contextPath(), contextModel, ui.thisUrl())) }" id="${ ext.id }">
+                            <a href="${ ui.escapeJs(ext.url("/" + ui.contextPath(), appContextModel, ui.thisUrl())) }" id="${ ext.id }">
                                 <li>
                                     <i class="${ ext.icon }"></i>
                                     ${ ui.message(ext.label) }

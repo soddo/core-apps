@@ -2,7 +2,8 @@ function PatientSearchWidget(configuration){
     var defaults = {
         minSearchCharacters: 3,
         searchInputId: 'patient-search',
-        searchResultsDivId: 'patient-search-results'
+        searchResultsDivId: 'patient-search-results',
+        clearButtonId: 'patient-search-clear-button'
     };
 
     var config = jq.extend({}, defaults, configuration);
@@ -24,6 +25,8 @@ function PatientSearchWidget(configuration){
 
     jq('#'+config.searchResultsDivId).append(tableHtml);
     var input = jq('#'+config.searchInputId);
+    var clearButton = jq('#' + config.clearButtonId);
+    var searchResults = jq('#' + config.searchResultsDivId);
     var pageCount = 0;
     var searchResultsData = [];
     var highlightedKeyboardRowIndex;
@@ -37,6 +40,9 @@ function PatientSearchWidget(configuration){
     var initialPatientData = [];
     var initialPatientUuids = [];
     var tableObject = jq('#'+tableId);
+    var performingSearch = false;  // flag to check if we are currently updating the search results
+    var afterSearchResultsUpdated = [];  // stores a set of functions to execute after we update search results (currently we are only using this for the doEnter function)
+
     if(config.initialPatients){
         _.each(config.initialPatients, function(p){
             //only add the uuid since it is only one we need to reference later
@@ -84,10 +90,19 @@ function PatientSearchWidget(configuration){
             }
         })
         .fail(function(jqXHR){
+            performingSearch = false;
             if(!currRequestCount || currRequestCount >= requestCount){
                 jq('#'+tableId).find('td.dataTables_empty').html("<span class='patient-search-error'>"+config.messages.searchError+"</span>");
             }
         });
+    }
+
+    var clearSearch = function() {
+        // do a reset, but also clear the input and hide the search results
+        reset();
+        input.val('');
+        input.focus();
+        searchResults.hide();
     }
 
     var reset = function(){
@@ -128,8 +143,16 @@ function PatientSearchWidget(configuration){
         }
 
         dTable.fnAddData(dataRows);
-
         refreshTable();
+        performingSearch = false;
+
+        // perform any actions that may have been queued up during the action (currently limited to the doEnter action)
+        if (!isTableEmpty()) {
+            _.each(afterSearchResultsUpdated, function(fn) {
+                fn();
+            })
+        }
+        afterSearchResultsUpdated = [];
     }
 
     var refreshTable = function(){
@@ -142,6 +165,7 @@ function PatientSearchWidget(configuration){
         if(rowCount == 0){
             jq('#'+tableId).find('td.dataTables_empty').html(config.messages.noMatchesFound);
         }
+        gotoFirstPage(); // always return back to the first page when refreshing the table
     }
 
     var isTableEmpty = function(){
@@ -151,21 +175,42 @@ function PatientSearchWidget(configuration){
         return !dTable || dTable.fnGetNodes().length == 0;
     }
 
+    var gotoPage = function(pageIndex) {
+        dTable.fnPageChange(pageIndex);
+    }
+
+    var gotoFirstPage = function() {
+        gotoPage(0);
+    }
+
     var selectRow = function(selectedRowIndex){
         var uuid = searchResultsData[selectedRowIndex].uuid;
         location.href = '/' + OPENMRS_CONTEXT_PATH + emr.applyContextModel(config.afterSelectedUrl, { patientId: uuid});
     }
 
     var doKeyEnter = function() {
+        // if no rows are currently highlighted..
         if (highlightedKeyboardRowIndex == undefined){
-            prepareForNewSearch();
-            doSearch(input.val());
-            return;
+            if(dTable && dTable.fnGetNodes().length == 1) {
+                // if there is only one row in the result set, automatically select that row
+                // (so that you can scan a patient id and have it automatically  load that patient dashboard)
+                selectRow(0);
+            }
+            else {
+                // otherwise, perform a new search
+                prepareForNewSearch();
+                doSearch(input.val());
+                return;
+            }
         }
+
+        // if there's a highlighted row, select it
         selectRow(highlightedKeyboardRowIndex);
     }
 
     var prepareForNewSearch = function(){
+        // set a flag to denote that we are starting a new search
+        performingSearch = true;
         //if there is any search delay in progress, cancel it
         if(searchDelayTimer != undefined){
             window.clearTimeout(searchDelayTimer);
@@ -369,6 +414,11 @@ function PatientSearchWidget(configuration){
 
     /***************** SETUP KEYBOARD AND MOUSE EVENT HANDLERS **************/
 
+    // handle the clear button
+    clearButton.click(function(event) {
+        clearSearch();
+    });
+
     input.keyup(function(event) {
         var kc = event.keyCode;
         //ignore enter(because it was handled already onkeydown), keyboard navigation and control keys
@@ -403,12 +453,23 @@ function PatientSearchWidget(configuration){
     //catch control keys to stop the cursor in the input box from moving.
     input.keydown(function(event) {
         var kc = event.keyCode;
-        if(kc == 13 ||(_.contains(keyboardNavigationKeys, kc) && !isTableEmpty())) {
+
+        // special handling for the enter key--while for the arrow keys we disregard any keystrokes while performing a search.
+        // we "cache" enter keystrokes so that they will be handled after the search is complete; this is to handle typing
+        // or scanning exact-match patient identifiers without requiring an additional keystroke
+        if (kc == 13) {
+            if (!performingSearch) {
+                doKeyEnter();
+            }
+            else {
+                afterSearchResultsUpdated.push(doKeyEnter)
+            }
+            return false;
+        }
+
+        if((_.contains(keyboardNavigationKeys, kc) && !isTableEmpty())) {
 
             switch(kc) {
-                case 13:
-                    doKeyEnter();
-                    break;
                 case 33:
                     doPageUp();
                     break;

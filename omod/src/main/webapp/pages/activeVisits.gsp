@@ -32,9 +32,17 @@
 			<tr id="visit-${ v.visit.id }">
 				<td>${ ui.format(v.visit.patient.patientIdentifier) }</td>
 				<td>
-                    <a href="${ ui.urlBind("/" + contextPath + patientPageUrl, [ patientId: v.visit.patient.id ]) }">
-                        ${ ui.format(v.visit.patient) }
-                    </a>
+
+                    <% if (sessionContext.currentUser.hasPrivilege(privilegePatientDashboard)) { %>
+                    <!-- only add link to patient dashboard if user has appropriate privilege -->
+                        <a href="${ ui.urlBind("/" + contextPath + patientPageUrl, [ patientId: v.visit.patient.id ]) }">
+                    <% } %>
+
+                    ${ ui.format(v.visit.patient) }
+
+                    <% if (sessionContext.currentUser.hasPrivilege(privilegePatientDashboard)) { %>
+                        </a>
+                    <% } %>
                 </td>
 				<td>
                     <% if (checkIn) { %>
