@@ -5,6 +5,8 @@
 
     ui.includeCss("coreapps", "patientHeader.css")
     ui.includeJavascript("coreapps", "patientdashboard/patient.js")
+    ui.includeJavascript("coreapps", "directives/Patientaddress.js")
+    
 %>
 
 
@@ -102,11 +104,17 @@
                         <small><a href="/${contextPath}/registrationapp/editPatientDemographics.page?patientId=${patient.patient.id}&returnUrl=${ui.urlEncode(ui.thisUrl())}">${ui.message("general.edit")}</a></small>
                     </span>
                 <% } %>
-               
+                <a href="#" id="patient-header-contactInfo" class="contact-info-label">
+					<span class="show">${ui.message("coreapps.patientHeader.showcontactinfo")}</span>
+					<i class="toggle-icon icon-caret-down small"></i>
+					<span class="hide">${ui.message("coreapps.patientHeader.hidecontactinfo")}</span>
+					<i class="toggle-icon icon-caret-up small"></i>
+				</a>
             </span>
             <div class="hidden" id="contactInfoContent" class="contact-info-content">
                 ${ ui.includeFragment("coreapps", "patientdashboard/contactInfoInline", [ patient: config.patient ]) }
-            </div>
+            </div>          
+      
         </h1>
         <% if (patient.patient.dead) { %>
             <div class="death-message">
