@@ -14,9 +14,6 @@
         }
     ]
 
-    if (!isNewPatientHeaderEnabled) {
-      tabs.add([ id: "contactInfo", label: ui.message("coreapps.patientDashBoard.contactinfo"), provider: "coreapps", fragment: "patientdashboard/contactInfo" ])
-    }
     tabs = tabs.flatten()
 
 	if(!returnUrl) {
@@ -27,7 +24,7 @@
 <script type="text/javascript">
     var breadcrumbs = [
         { icon: "icon-home", link: '/' + OPENMRS_CONTEXT_PATH + '/index.htm' },
-        { label: "${ ui.format(patient.patient.familyName) }, ${ ui.format(patient.patient.givenName) }" , link: '${ui.escapeJs(returnUrl)}'}
+        { label: "${ ui.format(patient.patient.givenName) } ${ ui.format(patient.patient.middleName)} ${ ui.format(patient.patient.familyName) }" , link: '${ui.escapeJs(returnUrl)}'}
     ];
 
     jq(function(){
@@ -37,47 +34,58 @@
     var patient = { id: ${ patient.id } };
 </script>
 
-<% if(includeFragments){
-    includeFragments.each{ %>
-        ${ ui.includeFragment(it.extensionParams.provider, it.extensionParams.fragment)}
-<%   }
-} %>
 
+<% if (sessionContext.currentUser.hasPrivilege(privilegePatientDashboard)) { %>
+<!-- as a sanity check, don't allow users without find patient privilege to view patient dashboard -->
 
-${ ui.includeFragment("coreapps", "patientHeader", [ patient: patient.patient, activeVisit: activeVisit ]) }
-<div class="actions dropdown">
-    <span class="dropdown-name"><i class="icon-cog"></i>${ ui.message("coreapps.actions") }<i class="icon-sort-down"></i></span>
-    <ul>
-        <% overallActions.each {
-            def url = it.url
-            url = it.url(contextPath, actionBindings, ui.thisUrl())
-        %>
-            <li>
-                <a href="${ url }"><i class="${ it.icon }"></i>${ ui.message(it.label) }</a>
-            </li>
-        <% } %>
-    </ul>
-</div>
+    <% if(includeFragments){
+        includeFragments.each{ %>
+            ${ ui.includeFragment(it.extensionParams.provider, it.extensionParams.fragment)}
+    <%   }
+    } %>
 
-<div class="tabs" xmlns="http://www.w3.org/1999/html">
-    <div class="dashboard-container">
-
+    ${ ui.includeFragment("coreapps", "patientHeader", [ patient: patient.patient, activeVisit: activeVisit, appContextModel: appContextModel ]) }
+    <div class="actions dropdown">
+        <span class="dropdown-name"><i class="icon-cog"></i>${ ui.message("coreapps.actions") }<i class="icon-sort-down"></i></span>
         <ul>
+            <% overallActions.each {
+                def url = it.url
+                url = it.url(contextPath, appContextModel, ui.thisUrl())
+            %>
+                <li>
+                    <a href="${ url }"><i class="${ it.icon }"></i>${ ui.message(it.label) }</a>
+                </li>
+            <% } %>
+        </ul>
+    </div>
+
+    <div class="tabs" xmlns="http://www.w3.org/1999/html">
+        <div class="dashboard-container">
+
+            <ul>
+                <% tabs.each { %>
+                <li>
+                    <a href="#${ it.id }">
+                        ${ it.label }
+                    </a>
+                </li>
+                <% } %>
+
+            </ul>
+
             <% tabs.each { %>
-            <li>
-                <a href="#${ it.id }">
-                    ${ it.label }
-                </a>
-            </li>
+            <div id="${it.id}">
+                ${ ui.includeFragment(it.provider, it.fragment, [ patient: patient ]) }
+            </div>
             <% } %>
 
-        </ul>
-
-        <% tabs.each { %>
-        <div id="${it.id}">
-            ${ ui.includeFragment(it.provider, it.fragment, [ patient: patient ]) }
         </div>
-        <% } %>
-
     </div>
-</div>
+
+<% } else { %>
+
+    <div>
+        <span class="error">${ ui.message('coreapps.patientDashBoard.noAccess') }</span>
+    </div>
+
+<% } %>

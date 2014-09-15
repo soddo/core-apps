@@ -5,6 +5,8 @@
 
     ui.includeCss("coreapps", "patientHeader.css")
     ui.includeJavascript("coreapps", "patientdashboard/patient.js")
+    ui.includeJavascript("coreapps", "directives/Patientaddress.js")
+    
 %>
 
 
@@ -30,12 +32,15 @@
         });
 
         jq(".editPatientIdentifier").click(function (event) {
+
+            var patientIdentifierId = jq(event.target).attr('data-patient-identifier-id');
             var identifierTypeId = jq(event.target).attr("data-identifier-type-id");
             var identifierTypeName = jq(event.target).attr("data-identifier-type-name");
             var patientIdentifierValue = jq(event.target).attr("data-patient-identifier-value");
 
             jq("#hiddenIdentifierTypeId").val(identifierTypeId);
             jq("#hiddenInitialIdentifierValue").val(patientIdentifierValue);
+            jq("#hiddenPatientIdentifierId").val(patientIdentifierId);
             jq("#identifierTypeNameSpan").text(identifierTypeName);
             jq("#patientIdentifierValue").val(patientIdentifierValue);
 
@@ -54,21 +59,19 @@
             });
         })
 
-        <% if (config.isNewPatientHeaderEnabled) { %>
-            jq("#patient-header-contactInfo").click(function (){
-                var contactInfoDialogDiv = jq("#contactInfoContent");
+        jq("#patient-header-contactInfo").click(function (){
+            var contactInfoDialogDiv = jq("#contactInfoContent");
 
-                if (contactInfoDialogDiv.hasClass('hidden')) {
-                    contactInfoDialogDiv.removeClass('hidden');
-                    jq(this).addClass('expanded');
-                } else {
-                    contactInfoDialogDiv.addClass('hidden');
-                    jq(this).removeClass('expanded');
-                }
+            if (contactInfoDialogDiv.hasClass('hidden')) {
+                contactInfoDialogDiv.removeClass('hidden');
+                jq(this).addClass('expanded');
+            } else {
+                contactInfoDialogDiv.addClass('hidden');
+                jq(this).removeClass('expanded');
+            }
 
-                return false;
-            });
-        <% } %>
+            return false;
+        });
     })
 </script>
 
@@ -76,9 +79,10 @@
 
     <div class="demographics">
         <h1 class="name">
-            <span>${ui.format(patient.patient.familyName)},<em>${ui.message("coreapps.patientHeader.familyname")}</em></span>
-            <span>${ui.format(patient.patient.givenName)}<em>${ui.message("coreapps.patientHeader.givenname")}</em></span>
-            &nbsp;
+             <span>${ui.format(patient.patient.givenName)}<em>${ui.message("coreapps.patientHeader.givenname")}</em></span>
+				<span>${ui.format(patient.patient.middleName)}<em>${ui.message("coreapps.patientHeader.middlename")}</em></span>
+				<span>${ui.format(patient.patient.familyName)}<em>${ui.message("coreapps.patientHeader.familyname")}</em></span>
+				&nbsp;
             <span class="gender-age">
                 <span>${ui.message("coreapps.gender." + patient.gender)}&nbsp;</span>
                 <span>
@@ -96,81 +100,83 @@
                 <% } %>
                 </span>
                 <% if(!config.hideEditDemographicsButton) { %>
-                    <span>
+                    <span class="edit-info">
                         <small><a href="/${contextPath}/registrationapp/editPatientDemographics.page?patientId=${patient.patient.id}&returnUrl=${ui.urlEncode(ui.thisUrl())}">${ui.message("general.edit")}</a></small>
                     </span>
                 <% } %>
-                <% if (config.isNewPatientHeaderEnabled) { %>
                 <a href="#" id="patient-header-contactInfo" class="contact-info-label">
-                    <span class="show">${ui.message("coreapps.patientHeader.showcontactinfo")}</span>
-                    <i class="toggle-icon icon-caret-down small"></i>
-                    <span class="hide">${ui.message("coreapps.patientHeader.hidecontactinfo")}</span>
-                    <i class="toggle-icon icon-caret-up small"></i>
-                </a>
-                <% } %>
+					<span class="show">${ui.message("coreapps.patientHeader.showcontactinfo")}</span>
+					<i class="toggle-icon icon-caret-down small"></i>
+					<span class="hide">${ui.message("coreapps.patientHeader.hidecontactinfo")}</span>
+					<i class="toggle-icon icon-caret-up small"></i>
+				</a>
             </span>
-            <% if (config.isNewPatientHeaderEnabled) { %>
-                <div class="hidden" id="contactInfoContent">
-                    ${ ui.includeFragment("coreapps", "patientdashboard/contactInfoInline", [ patient: config.patient ]) }
-                </div>
-            <% } %>
-
+            <div class="hidden" id="contactInfoContent" class="contact-info-content">
+                ${ ui.includeFragment("coreapps", "patientdashboard/contactInfoInline", [ patient: config.patient ]) }
+            </div>          
+      
         </h1>
         <% if (patient.patient.dead) { %>
             <div class="death-message">
-                ${ui.message("coreapps.deadPatient", ui.format(patient.patient.deathDate))}
+                ${ui.message("coreapps.deadPatient", ui.format(patient.patient.deathDate), ui.format(patient.patient.causeOfDeath))}
+                <%= ui.includeFragment("appui", "extensionPoint", [ id: "patientHeader.deathInfo", contextModel: appContextModel ]) %>
             </div>
         <% } %>
         <% if (config.activeVisit) { %>
             <% def visit = config.activeVisit.visit %>
-            <% if (config.isNewPatientHeaderEnabled) { %>
-                <div class="active-visit-started-at-message">
-                    ${ui.message("coreapps.patientHeader.activeVisit.at", config.activeVisitStartDatetime)}
-                </div>
-                <% if (config.activeVisit.admitted) { %>
-                    <div class="active-visit-message">
-                        ${ui.message("coreapps.patientHeader.activeVisit.inpatient", ui.format(config.activeVisit.latestAdtEncounter.location))}
-                    </div>
-                <% } else { %>
-                    <div class="active-visit-message">
-                        ${ui.message("coreapps.patientHeader.activeVisit.outpatient")}
-                    </div>
-                <% } %>
-            <% } else { %>
-            <div class="status-container">
-                <span class="status active"></span>
-                ${ui.message("coreapps.activeVisit")}
+
+            <div class="active-visit-started-at-message">
+                ${ui.message("coreapps.patientHeader.activeVisit.at", config.activeVisitStartDatetime)}
             </div>
+            <% if (config.activeVisit.admitted) { %>
+                <div class="active-visit-message">
+                    ${ui.message("coreapps.patientHeader.activeVisit.inpatient", ui.format(config.activeVisit.latestAdtEncounter.location))}
+                </div>
+            <% } else { %>
+                <div class="active-visit-message">
+                    ${ui.message("coreapps.patientHeader.activeVisit.outpatient")}
+                </div>
             <% } %>
+
         <% } %>
     </div>
 
     <div class="identifiers">
         <em>${ui.message("coreapps.patientHeader.patientId")}</em>
+
         <% patient.primaryIdentifiers.each { %>
         <span>${it.identifier}</span>
         <% } %>
         <br/>
         <% if (config.extraPatientIdentifierTypes) { %>
-        <% config.extraPatientIdentifierTypes.each { %>
-        <% def extraPatientIdentifier = patient.patient.getPatientIdentifier(it.patientIdentifierType) %>
-        <% if (extraPatientIdentifier) { %>
-            <em>${ui.format(it.patientIdentifierType)}</em>
-            <% if (it.editable) { %>
-                 <span><a class="editPatientIdentifier" data-identifier-type-id="${it.patientIdentifierType.id}" data-identifier-type-name="${ui.format(it.patientIdentifierType)}"
-                    data-patient-identifier-value="${extraPatientIdentifier}" href="#${it.patientIdentifierType.id}">${extraPatientIdentifier}</a></span>
-            <% } else {%>
-                <span>${extraPatientIdentifier}</span>
-            <% } %>
-        <% } else if (it.editable) { %>
-            <em>${ui.format(it.patientIdentifierType)}</em>
-            <span class="add-id"><a class="editPatientIdentifier" data-identifier-type-id="${it.patientIdentifierType.id}"
-            data-identifier-type-name="${ui.format(it.patientIdentifierType)}" data-patient-identifier-value=""
-            href="#${it.patientIdentifierType.id}">${ui.message("coreapps.patient.identifier.add")}</a></span>
-        <% } %>
 
-        <br/>
-        <% } %>
+            <% config.extraPatientIdentifierTypes.each { extraPatientIdentifierType -> %>
+
+                <% def extraPatientIdentifiers = patient.patient.getPatientIdentifiers(extraPatientIdentifierType.patientIdentifierType) %>
+
+                <% if (extraPatientIdentifiers) { %>
+                    <em>${ui.format(extraPatientIdentifierType.patientIdentifierType)}</em>
+
+                    <% if (extraPatientIdentifierType.editable) { %>
+                        <% extraPatientIdentifiers.each { extraPatientIdentifier -> %>
+                             <span><a class="editPatientIdentifier" data-patient-identifier-id="${extraPatientIdentifier.id}" data-identifier-type-id="${extraPatientIdentifierType.patientIdentifierType.id}"
+                                data-identifier-type-name="${ui.format(extraPatientIdentifierType.patientIdentifierType)}" data-patient-identifier-value="${extraPatientIdentifier}" href="#${extraPatientIdentifierType.patientIdentifierType.id}">${extraPatientIdentifier}</a></span>
+                        <% } %>
+                    <% } else {%>
+                        <% extraPatientIdentifiers.each { extraPatientIdentifier -> %>
+                            <span>${extraPatientIdentifier}</span>
+                        <% } %>
+                    <% } %>
+
+                <% } else if (extraPatientIdentifierType.editable) { %>
+                    <em>${ui.format(extraPatientIdentifierType.patientIdentifierType)}</em>
+                    <span class="add-id"><a class="editPatientIdentifier"  data-patient-identifier-id="" data-identifier-type-id="${extraPatientIdentifierType.patientIdentifierType.id}"
+                    data-identifier-type-name="${ui.format(extraPatientIdentifierType.patientIdentifierType)}" data-patient-identifier-value=""
+                    href="#${extraPatientIdentifierType.patientIdentifierType.id}">${ui.message("coreapps.patient.identifier.add")}</a></span>
+                <% } %>
+
+            <br/>
+            <% } %>
         <% } %>
     </div>
 
@@ -194,6 +200,7 @@
     </div>
 
     <div class="dialog-content">
+        <input type="hidden" id="hiddenPatientIdentifierId" value=""/>
         <input type="hidden" id="hiddenIdentifierTypeId" value=""/>
         <input type="hidden" id="hiddenInitialIdentifierValue" value=""/>
         <ul>

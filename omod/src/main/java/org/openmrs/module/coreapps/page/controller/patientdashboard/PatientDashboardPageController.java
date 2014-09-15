@@ -18,10 +18,10 @@ import org.openmrs.Patient;
 import org.openmrs.api.OrderService;
 import org.openmrs.module.appframework.context.AppContextModel;
 import org.openmrs.module.appframework.domain.Extension;
-import org.openmrs.module.appframework.feature.FeatureToggleProperties;
 import org.openmrs.module.appframework.service.AppFrameworkService;
 import org.openmrs.module.appui.UiSessionContext;
 import org.openmrs.module.coreapps.CoreAppsConstants;
+import org.openmrs.module.coreapps.contextmodel.PatientContextModel;
 import org.openmrs.module.coreapps.contextmodel.VisitContextModel;
 import org.openmrs.module.emrapi.adt.AdtService;
 import org.openmrs.module.emrapi.event.ApplicationEventService;
@@ -45,7 +45,6 @@ public class PatientDashboardPageController {
 	                       @SpringBean("orderService") OrderService orderService,
 	                       @SpringBean("adtService") AdtService adtService,
 	                       @SpringBean("appFrameworkService") AppFrameworkService appFrameworkService,
-                           @SpringBean("featureToggles") FeatureToggleProperties featureToggleProperties,
                            @SpringBean("applicationEventService") ApplicationEventService applicationEventService,
                            UiSessionContext sessionContext) {
 		
@@ -77,10 +76,9 @@ public class PatientDashboardPageController {
 
 
         AppContextModel contextModel = sessionContext.generateAppContextModel();
-        contextModel.put("patientId", patient.getPatientId());
-        contextModel.put("patientDead", patient.isDead());
+        contextModel.put("patient", new PatientContextModel(patient));
         contextModel.put("visit", activeVisit == null ? null : new VisitContextModel(activeVisit));
-		model.addAttribute("actionBindings", contextModel);
+		model.addAttribute("appContextModel", contextModel);
 
 		List<Extension> overallActions = appFrameworkService.getExtensionsForCurrentUser("patientDashboard.overallActions", contextModel);
 		Collections.sort(overallActions);
@@ -95,8 +93,7 @@ public class PatientDashboardPageController {
 		Collections.sort(visitActions);
 		model.addAttribute("visitActions", visitActions);
 		model.addAttribute("patientTabs", appFrameworkService.getExtensionsForCurrentUser("patientDashboard.tabs"));
-        model.addAttribute("isNewPatientHeaderEnabled",
-                featureToggleProperties.isFeatureEnabled("enableNewPatientHeader"));
+        model.addAttribute("privilegePatientDashboard", CoreAppsConstants.PRIVILEGE_PATIENT_DASHBOARD);
 
         applicationEventService.patientViewed(patient, sessionContext.getCurrentUser());
 

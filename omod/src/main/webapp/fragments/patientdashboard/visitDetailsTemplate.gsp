@@ -8,13 +8,9 @@
     [[ } ]]
     [[ if (canDeleteVisit) { ]]
         <a class="right" id="deleteVisitLink" href="#" data-visit-id="[[= id]]">${ ui.message("coreapps.task.deleteVisit.label")}</a>
+        <span class="right"> | </span>
     [[ } ]]
-    <% if (featureToggles.isFeatureEnabled("editVisitDates") ) { %>
-        [[ if (canDeleteVisit) { ]]
-            <span class="right"> | </span>
-        [[ } ]]
         <a class="right" id="editVisitDatesLink" href="#" data-visit-id="[[= id]]">${ ui.message("coreapps.task.editVisitDate.label")}</a>
-    <% } %>
 </div>
 
 <div class="visit-actions [[- stopDatetime ? 'past-visit' : 'active-visit' ]]">
@@ -25,7 +21,7 @@
 
         [[ if (_.contains(availableVisitActions, '${task.id}')) { ]]
 
-            <%    def url = task.url(contextPath, actionBindings, ui.thisUrl())
+            <% def url = task.url(contextPath, appContextModel.with("visit", [id: "{{visit.id}}", active: "{{visit.active}}"]), ui.thisUrl())
                 if (task.type != "script") {
                 %>
                 <a href="[[= emr.applyContextModel('${ ui.escapeJs(url) }', { 'visit.id': id, 'visit.active': stopDatetime == null }) ]]" id="${task.id}" class="button task">

@@ -37,8 +37,8 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<appframeworkVersion>2.1</appframeworkVersion>
         <uiframeworkVersion>3.2</uiframeworkVersion>
-        <emrapiVersion>1.2-SNAPSHOT</emrapiVersion>
-        <appuiVersion>1.1</appuiVersion>
+        <emrapiVersion>1.4-SNAPSHOT</emrapiVersion>
+        <appuiVersion>1.2-SNAPSHOT</appuiVersion>
         <idgenVersion>2.7</idgenVersion>
         <addresshierarchyVersion>2.2.9</addresshierarchyVersion>
         <uicommonsVersion>1.0</uicommonsVersion>
@@ -143,7 +143,7 @@
 
             <dependency>
                 <groupId>org.openmrs.module</groupId>
-                <artifactId>emrapi-api</artifactId>
+                <artifactId>emrapi-api-1.9</artifactId>
                 <version>${emrapiVersion}</version>
                 <type>jar</type>
                 <scope>provided</scope>
